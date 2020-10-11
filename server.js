@@ -12,13 +12,20 @@ var nodemailer = require('nodemailer');
 const MongoStore = require('connect-mongo')(session);
 
 const app = express();
+
+mongoose.connect("mongodb+srv://admin:" + process.env.DATABASEPASS + "@cluster0.xpbd4.mongodb.net/NNNUsers?retryWrites=true&w=majority", {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+});
+mongoose.set("useCreateIndex", true);
+
 app.use(cors({origin: "http://localhost:3000", credentials: true}));
 app.use(bodyParser.urlencoded({
   extended: true
 }));
 app.use(session({
   secret: process.env.SECRET,
-  store: new MongoStore(options),
+  store: new MongoStore({ mongooseConnection: mongoose.connection })
   resave: false,
   saveUninitialized: false
 }));
@@ -35,12 +42,6 @@ passport.deserializeUser(function(id, done) {
     done(err, user);
   });
 });
-
-mongoose.connect("mongodb+srv://admin:" + process.env.DATABASEPASS + "@cluster0.xpbd4.mongodb.net/NNNUsers?retryWrites=true&w=majority", {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-});
-mongoose.set("useCreateIndex", true);
 
 var transporter = nodemailer.createTransport({
   service: 'gmail',
