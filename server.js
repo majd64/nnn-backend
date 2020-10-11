@@ -1,15 +1,15 @@
 const express = require("express");
 const bodyParser = require("body-parser");
-const ejs = require("ejs");
 const mongoose = require("mongoose");
 const session = require("express-session");
 const passport = require("passport");
 const passportLocalMongoose = require("passport-local-mongoose");
-const cors = require("cors")
-require("dotenv").config()
-let User = require("./models/user.model");
-var nodemailer = require('nodemailer');
+const cors = require("cors");
+const nodemailer = require('nodemailer');
+require("dotenv").config();
 const MongoStore = require('connect-mongo')(session);
+let User = require("./models/user.model");
+let emailRegex = require("./emailRegex");
 
 const app = express();
 
@@ -36,7 +36,6 @@ passport.use(User.createStrategy());
 passport.serializeUser(function(user, done) {
   done(null, user.id);
 });
-
 passport.deserializeUser(function(id, done) {
   User.findById(id, function(err, user) {
     done(err, user);
@@ -52,9 +51,6 @@ var transporter = nodemailer.createTransport({
 });
 
 app.post("/login", function(req, res) {
-  console.log("attemp to verify")
-  console.log(req.body.email)
-  console.log(req.body.password)
   const user = new User({
     email: req.body.email,
     password: req.body.password
@@ -63,7 +59,6 @@ app.post("/login", function(req, res) {
     if (err) {
       res.send("Nuts! An unknown error occured")
     } else {
-      console.log("attempt to auth")
       passport.authenticate("local")(req, res, function() {
         res.send("success")
       });
@@ -111,15 +106,13 @@ app.post("/register", function(req, res) {
         res.send("Nuts! An unknown error occured")
       }
     } else {
-
       passport.authenticate("local")(req, res, function() {
         var mailOptions = {
           from: process.env.NODEMAILERUSER,
           to: user.email,
-          subject: 'NNN Verify Email',
-          text: 'Thank you for registering for NNN click the following link to verify your email: http://localhost:5000/verifyemail/' + user.emailVerificationHash
+          subject: 'NN Email Verification',
+          text: 'Thank you for registering for NNN click the following link to verify your email: https://nnn-server.herokuapp.com/verifyemail/' + user.emailVerificationHash
         };
-
         transporter.sendMail(mailOptions, function(error, info){
           if (error) {
             console.log(error);
@@ -133,38 +126,32 @@ app.post("/register", function(req, res) {
   });
 });
 
-
 app.get('/verifyemail/:emailverificationhash', function (req, res) {
-  console.log(req.params.hash)
   User.findOne({
     emailVerificationHash: req.params.emailverificationhash
   }, function(err, user) {
     if (user) {
       user.emailVerified = true;
       user.save();
-      res.redirect("http://localhost:3000/login")
+      res.redirect("https://nnn-server.herokuapp.com/login")
     } else {
       res.send("cannot find user")
     }
   })
 })
 
-
-
 app.get("/logout", function(req, res) {
   req.logout();
   res.send("success")
 });
 
-app.route("/user/auth")
-  .get(function(req, res){
-    if (req.isAuthenticated()) {
-      res.send("true")
-    } else {
-      res.send("false")
-    }
-  });
-
+app.get("/user/auth", function(req, res){
+  if (req.isAuthenticated()) {
+    res.send("true")
+  } else {
+    res.send("false")
+  }
+})
 
 app.route("/user")
   .get(function(req, res) {
@@ -225,27 +212,3 @@ app.post("/user/changepassword", function(req, res) {
 app.listen(process.env.PORT || 5000, function() {
   console.log("Server started.");
 });
-
-var emailRegex = /^[-!#$%&'*+\/0-9=?A-Z^_a-z{|}~](\.?[-!#$%&'*+\/0-9=?A-Z^_a-z`{|}~])*@[a-zA-Z0-9](-*\.?[a-zA-Z0-9])*\.[a-zA-Z](-?[a-zA-Z0-9])+$/;
-function isEmailValid(email) {
-    if (!email)
-        return false;
-
-    if(email.length>254)
-        return false;
-
-    var valid = emailRegex.test(email);
-    if(!valid)
-        return false;
-
-    // Further checking of some things regex can't handle
-    var parts = email.split("@");
-    if(parts[0].length>64)
-        return false;
-
-    var domainParts = parts[1].split(".");
-    if(domainParts.some(function(part) { return part.length>63; }))
-        return false;
-
-    return true;
-}
