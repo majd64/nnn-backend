@@ -34,7 +34,7 @@ passport.deserializeUser(function(id, done) {
   });
 });
 
-mongoose.connect("mongodb://localhost:27017/userDB", {
+mongoose.connect("mongodb+srv://admin:" + process.env.DATABASEPASS + "@cluster0.xpbd4.mongodb.net/NNNUsers?retryWrites=true&w=majority", {
   useNewUrlParser: true,
   useUnifiedTopology: true
 });
