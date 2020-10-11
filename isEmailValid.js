@@ -21,3 +21,5 @@ function isEmailValid(email) {
 
     return true;
 }
+
+export default isEmailValid;
