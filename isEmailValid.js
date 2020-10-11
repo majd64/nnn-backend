@@ -22,4 +22,4 @@ function isEmailValid(email) {
     return true;
 }
 
-export default isEmailValid;
+module.exports = User;
