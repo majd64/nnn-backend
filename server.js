@@ -9,6 +9,7 @@ const cors = require("cors")
 require("dotenv").config()
 let User = require("./models/user.model");
 var nodemailer = require('nodemailer');
+const MongoStore = require('connect-mongo')(session);
 
 const app = express();
 app.use(cors({origin: "http://localhost:3000", credentials: true}));
@@ -17,6 +18,7 @@ app.use(bodyParser.urlencoded({
 }));
 app.use(session({
   secret: process.env.SECRET,
+  store: new MongoStore(options),
   resave: false,
   saveUninitialized: false
 }));
