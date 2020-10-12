@@ -154,7 +154,7 @@ app.get("/logout", function(req, res) {
 });
 
 app.get("/user/auth", function(req, res){
-  console.log("auth called");
+  console.log("auth called: " + req.body.id);
   if (req.isAuthenticated()) {
     res.send("true")
   } else {
@@ -165,7 +165,9 @@ app.get("/user/auth", function(req, res){
 app.route("/user")
   .get(function(req, res) {
     if (req.isAuthenticated()) {
+      console.log("/user: " + req.body.id)
       User.findOne({
+
         id: req.body.id
       }, function(err, user) {
         if (user) {
