@@ -19,7 +19,7 @@ mongoose.connect("mongodb+srv://admin:" + process.env.DATABASEPASS + "@cluster0.
 });
 mongoose.set("useCreateIndex", true);
 
-app.set('trust proxy', true);
+app.enable('trust proxy');
 app.use(cors({origin: "http://localhost:3000", credentials: true}));
 app.use(bodyParser.urlencoded({
   extended: true
