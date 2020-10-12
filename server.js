@@ -25,9 +25,10 @@ app.use(bodyParser.urlencoded({
 }));
 app.use(session({
   secret: process.env.SECRET,
-  // store: new MongoStore({ mongooseConnection: mongoose.connection }),
+  store: new MongoStore({ mongooseConnection: mongoose.connection }),
   resave: false,
-  saveUninitialized: false,
+  saveUninitialized: true,
+  cookie: {secure: false}
 }));
 app.set('trustproxy', true);
 app.use(passport.initialize());
