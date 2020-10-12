@@ -28,7 +28,7 @@ app.use(session({
   secret: process.env.SECRET,
   store: new MongoStore({ mongooseConnection: mongoose.connection }),
   resave: false,
-  saveUninitialized: true,
+  saveUninitialized: false,
   proxy : true,
   cookie: { secure: true }
 }));
