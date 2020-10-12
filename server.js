@@ -23,7 +23,7 @@ app.use(cors({origin: "https://nnn-frontend.herokuapp.com", credentials: true}))
 app.use(bodyParser.urlencoded({
   extended: true
 }));
-// app.enable('trust proxy'); // add this line
+app.enable('trust proxy'); // add this line
 app.use(session({
   secret: process.env.SECRET,
   resave: false,
@@ -35,13 +35,13 @@ app.use(passport.session());
 
 passport.use(User.createStrategy());
 passport.serializeUser(function(user, done) {
+  console.log("serializing user")
   done(null, user.id);
 });
 passport.deserializeUser(function(id, done) {
-  console.log("METHODCALLEDIDINCOMING: " + id)
+  console.log("deserializeUser called: " + id)
   User.findById(id, function(err, user) {
     done(err, user, function(){
-
       console.log("deserializeUserError: " + err)
     });
   });
@@ -61,7 +61,9 @@ app.post("/login", function(req, res) {
     password: req.body.password
   });
   req.login(user, function(err) {
+    console.log("req.login called")
     if (err) {
+      console.log(err)
       res.send("Nuts! An unknown error occured")
     } else {
       passport.authenticate("local")(req, res, function() {
@@ -101,6 +103,7 @@ app.post("/register", function(req, res) {
     username: req.body.username
   }), req.body.password, function(err, user) {
     if (err) {
+      console.log(err)
       if (err.name === "UserExistsError"){
         res.send("This email already exists")
       }
