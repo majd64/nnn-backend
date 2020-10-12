@@ -19,18 +19,18 @@ mongoose.connect("mongodb+srv://admin:" + process.env.DATABASEPASS + "@cluster0.
 });
 mongoose.set("useCreateIndex", true);
 
-app.enable('trust proxy');
+// app.enable('trust proxy');
 app.use(cors({origin: "http://localhost:3000", credentials: true}));
 app.use(bodyParser.urlencoded({
   extended: true
 }));
 app.use(session({
-  proxy : true,
+  // proxy : true,
   secret: process.env.SECRET,
   store: new MongoStore({ mongooseConnection: mongoose.connection }),
   resave: false,
   saveUninitialized: true,
-  cookie: {secure: true}
+  cookie: { secure: false }
 }));
 app.use(passport.initialize());
 app.use(passport.session());
