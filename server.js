@@ -23,16 +23,12 @@ app.use(cors({origin: "http://localhost:3000", credentials: true}));
 app.use(bodyParser.urlencoded({
   extended: true
 }));
-app.enable('trust proxy'); // add this line
+// app.enable('trust proxy'); // add this line
 app.use(session({
   secret: process.env.SECRET,
   resave: false,
   saveUninitialized: false,
-  store: new MongoStore({ mongooseConnection: mongoose.connection }),
-  proxy: true, // add this line
-  cookie: {
-    secure: true,
-  }
+  store: new MongoStore({ mongooseConnection: mongoose.connection })
 }));
 app.use(passport.initialize());
 app.use(passport.session());
