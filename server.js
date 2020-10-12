@@ -13,6 +13,13 @@ let isEmailValid = require("./isEmailValid");
 
 const app = express();
 
+app.use(function(req,res,next){
+    res.header("Access-Control-Allow-Origin", "http://localhost:3000");
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+    res.header("Access-Control-Allow-Credentials", "true")
+    next();
+})
+
 mongoose.connect("mongodb+srv://admin:" + process.env.DATABASEPASS + "@cluster0.xpbd4.mongodb.net/NNNUsers?retryWrites=true&w=majority", {
   useNewUrlParser: true,
   useUnifiedTopology: true
@@ -21,13 +28,6 @@ mongoose.set("useCreateIndex", true);
 
 app.set('trust proxy', 1) // trust first proxy
 
-app.use(function(req, res, next) {
-  res.setHeader("Access-Control-Allow-Origin", "http://localhost:3000");
-  res.header('Access-Control-Allow-Origin', "http://localhost:3000");
-  res.header('Access-Control-Allow-Credentials', true);
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
-  next();
-});
 
 app.use(cors({origin: "http://localhost:3000", credentials: true}));
 app.use(bodyParser.urlencoded({
