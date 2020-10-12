@@ -30,7 +30,7 @@ app.use(session({
   saveUninitialized: true,
   cookie: {secure: false}
 }));
-app.set('trustproxy', true);
+app.set('trust proxy', true);
 app.use(passport.initialize());
 app.use(passport.session());
 
