@@ -155,6 +155,7 @@ app.get("/logout", function(req, res) {
 });
 
 app.get("/user/auth", function(req, res){
+  console.log(req);
   if (req.isAuthenticated()) {
     res.send("true")
   } else {
