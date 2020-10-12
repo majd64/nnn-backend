@@ -24,7 +24,7 @@ app.use(cors({origin: "http://localhost:3000", credentials: true}));
 app.use(bodyParser.urlencoded({
   extended: true
 }));
-app.use(session({
+app.use(expressSession({
   secret: process.env.SECRET,
   store: new MongoStore({ mongooseConnection: mongoose.connection }),
   resave: false,
