@@ -19,6 +19,7 @@ mongoose.connect("mongodb+srv://admin:" + process.env.DATABASEPASS + "@cluster0.
 });
 mongoose.set("useCreateIndex", true);
 
+app.set('trust proxy', true);
 app.use(cors({origin: "http://localhost:3000", credentials: true}));
 app.use(bodyParser.urlencoded({
   extended: true
@@ -30,7 +31,6 @@ app.use(session({
   saveUninitialized: true,
   cookie: {secure: false}
 }));
-app.set('trust proxy', true);
 app.use(passport.initialize());
 app.use(passport.session());
 
