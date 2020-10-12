@@ -22,7 +22,8 @@ mongoose.set("useCreateIndex", true);
 app.set('trust proxy', 1) // trust first proxy
 
 app.use(function(req, res, next) {
-  res.header('Access-Control-Allow-Origin', 'https://nnn-server.herokuapp.com');
+  res.setHeader("Access-Control-Allow-Origin", "http://localhost:3000");
+  res.header('Access-Control-Allow-Origin', "http://localhost:3000");
   res.header('Access-Control-Allow-Credentials', true);
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
   next();
