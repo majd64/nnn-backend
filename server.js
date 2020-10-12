@@ -35,9 +35,9 @@ app.use(bodyParser.urlencoded({
 }));
 app.use(session({
   secret: process.env.SECRET,
-  store: new MongoStore({ mongooseConnection: mongoose.connection }),
-  resave: false,
-  saveUninitialized: false,
+  resave: true,
+  saveUninitialized: true,
+  store: new MongoStore({ mongooseConnection: mongoose.connection })
 }));
 app.use(passport.initialize());
 app.use(passport.session());
