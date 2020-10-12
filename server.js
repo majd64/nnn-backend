@@ -28,10 +28,10 @@ app.use(session({
   secret: process.env.SECRET,
   resave: false,
   saveUninitialized: false,
+  store: new MongoStore({ mongooseConnection: mongoose.connection }),
   proxy: true, // add this line
   cookie: {
     secure: true,
-    store: new MongoStore({ mongooseConnection: mongoose.connection })
   }
 }));
 app.use(passport.initialize());
