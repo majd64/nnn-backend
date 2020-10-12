@@ -13,30 +13,21 @@ let isEmailValid = require("./isEmailValid");
 
 const app = express();
 
-app.use(function(req,res,next){
-    res.header("Access-Control-Allow-Origin", "http://localhost:3000");
-    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-    res.header("Access-Control-Allow-Credentials", "true")
-    next();
-})
-
-mongoose.connect("mongodb+srv://admin:" + process.env.DATABASEPASS + "@cluster0.xpbd4.mongodb.net/NNNUsers?retryWrites=true&w=majority", {
+mongoose.connect("mongodb+srv://admin:" + process.env.DBPASS + "@cluster0.xpbd4.mongodb.net/" + process.env.DBNAME + "?retryWrites=true&w=majority", {
   useNewUrlParser: true,
   useUnifiedTopology: true
 });
 mongoose.set("useCreateIndex", true);
 
 app.set('trust proxy', 1) // trust first proxy
-
-
 app.use(cors({origin: "http://localhost:3000", credentials: true}));
 app.use(bodyParser.urlencoded({
   extended: true
 }));
 app.use(session({
   secret: process.env.SECRET,
-  resave: true,
-  saveUninitialized: true,
+  resave: false,
+  saveUninitialized: false,
   store: new MongoStore({ mongooseConnection: mongoose.connection })
 }));
 app.use(passport.initialize());
@@ -160,7 +151,7 @@ app.get("/logout", function(req, res) {
 });
 
 app.get("/user/auth", function(req, res){
-  console.log(req);
+  console.log("auth called");
   if (req.isAuthenticated()) {
     res.send("true")
   } else {
@@ -224,6 +215,6 @@ app.post("/user/changepassword", function(req, res) {
   }
 })
 
-app.listen(process.env.PORT || 5000, function() {
+app.listen(5000, function() {
   console.log("Server started.");
 });
