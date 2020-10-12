@@ -9,7 +9,7 @@ const nodemailer = require('nodemailer');
 require("dotenv").config();
 const MongoStore = require('connect-mongo')(session);
 let User = require("./models/user.model");
-let isEmailValid = require("./isEmailValid");
+let isEmailValid = require("./isEmailValid");//
 
 const app = express();
 
