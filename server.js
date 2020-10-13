@@ -10,8 +10,6 @@ require("dotenv").config();
 const MongoStore = require('connect-mongo')(session);
 let User = require("./models/user.model");
 let isEmailValid = require("./isEmailValid");
-const { shouldSendSameSiteNone } = require('should-send-same-site-none');
-
 
 const app = express();
 
@@ -21,21 +19,14 @@ mongoose.connect("mongodb+srv://admin:" + process.env.DBPASS + "@cluster0.xpbd4.
 });
 mongoose.set("useCreateIndex", true);
 
-app.use(shouldSendSameSiteNone);
-app.use(cors({origin: "https://nnn-frontend.herokuapp.com", credentials: true}));
 app.use(bodyParser.urlencoded({
   extended: true
 }));
-app.set('trust proxy', 1) // trust first proxy
 app.use(session({
   secret: process.env.SECRET,
   resave: false,
   saveUninitialized: false,
   store: new MongoStore({ mongooseConnection: mongoose.connection }),
-  cookie: {
-    sameSite: "none",
-    secure: true
-  }
 }));
 app.use(passport.initialize());
 app.use(passport.session());
