@@ -9,6 +9,8 @@ require("dotenv").config();
 const MongoStore = require('connect-mongo')(session);
 let User = require("./models/user.model");
 let isEmailValid = require("./isEmailValid");
+const path = require('path');
+
 
 const app = express();
 
@@ -17,6 +19,11 @@ mongoose.connect("mongodb+srv://admin:" + process.env.DBPASS + "@cluster0.xpbd4.
   useUnifiedTopology: true
 });
 mongoose.set("useCreateIndex", true);
+
+app.use(express.static(path.join(__dirname, 'build')));
+
+
+
 
 app.set('trust proxy', 1) // trust first proxy
 app.use(bodyParser.urlencoded({
@@ -215,6 +222,10 @@ app.post("/api/user/changepassword", function(req, res) {
     res.send("no auth")
   }
 })
+
+app.get('/*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'build', 'index.html'));
+});
 
 app.listen(process.env.PORT || 5000, function() {
   console.log("Server started.");
