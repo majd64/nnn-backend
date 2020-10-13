@@ -30,7 +30,7 @@ app.use(session({
   saveUninitialized: false,
   store: new MongoStore({ mongooseConnection: mongoose.connection }),
   cookie: {
-    domain: "https://nnn-frontend.herokuapp.com"
+    domain: "localhost"
   }
 }));
 app.use(passport.initialize());
