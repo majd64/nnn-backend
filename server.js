@@ -19,7 +19,7 @@ mongoose.connect("mongodb+srv://admin:" + process.env.DBPASS + "@cluster0.xpbd4.
 });
 mongoose.set("useCreateIndex", true);
 
-app.use(cors({origin: "http://localhost:3000", credentials: true}));
+app.use(cors({origin: "https://nnn-frontend.herokuapp.com", credentials: true}));
 app.use(bodyParser.urlencoded({
   extended: true
 }));
@@ -29,7 +29,9 @@ app.use(session({
   resave: false,
   saveUninitialized: false,
   store: new MongoStore({ mongooseConnection: mongoose.connection }),
-  httpOnly: false
+  cookie: {
+    domain: "https://nnn-frontend.herokuapp.com"
+  }
 }));
 app.use(passport.initialize());
 app.use(passport.session());
