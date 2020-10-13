@@ -30,7 +30,8 @@ app.use(session({
   saveUninitialized: false,
   store: new MongoStore({ mongooseConnection: mongoose.connection }),
   cookie: {
-    SameSite: "Lax"
+    SameSite: "None",
+    secure: true
   }
 }));
 app.use(passport.initialize());
