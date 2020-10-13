@@ -18,6 +18,7 @@ mongoose.connect("mongodb+srv://admin:" + process.env.DBPASS + "@cluster0.xpbd4.
 });
 mongoose.set("useCreateIndex", true);
 
+app.enable('trust proxy');
 app.use(bodyParser.urlencoded({
   extended: true
 }));
@@ -37,7 +38,7 @@ passport.serializeUser(function(user, done) {
 });
 
 passport.deserializeUser(function(id, done) {
-  console.log("deserializeUser called: " + id)
+  console.log("deserializing user")
   User.findById(id, function(err, user) {
     done(err, user);
   });
@@ -52,12 +53,12 @@ var transporter = nodemailer.createTransport({
 });
 
 app.post("/api/login", function(req, res) {
+  console.log("login reached")
   const user = new User({
     email: req.body.email,
     password: req.body.password
   });
   req.login(user, function(err) {
-    console.log("req.login called")
     if (err) {
       console.log(err)
       res.send("Nuts! An unknown error occured")
@@ -150,7 +151,7 @@ app.get("/api/logout", function(req, res) {
 });
 
 app.get("/api/user/auth", function(req, res){
-  console.log("auth called: " + req.body.id);
+  console.log("auth reached");
   if (req.isAuthenticated()) {
     res.send("true")
   } else {
@@ -161,7 +162,6 @@ app.get("/api/user/auth", function(req, res){
 app.route("/api/user")
   .get(function(req, res) {
     if (req.isAuthenticated()) {
-      console.log("/user: " + req.body.id)
       User.findOne({
 
         id: req.body.id
