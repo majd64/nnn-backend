@@ -27,9 +27,9 @@ app.set('trust proxy', 1) // trust first proxy
 app.use(session({
   secret: process.env.SECRET,
   resave: false,
-  saveUninitialized: true,
-  cookie: { secure: true }
-}))
+  saveUninitialized: false,
+  store: new MongoStore({ mongooseConnection: mongoose.connection })
+}));
 app.use(passport.initialize());
 app.use(passport.session());
 
@@ -38,12 +38,11 @@ passport.serializeUser(function(user, done) {
   console.log("serializing user")
   done(null, user.id);
 });
+
 passport.deserializeUser(function(id, done) {
   console.log("deserializeUser called: " + id)
   User.findById(id, function(err, user) {
-    done(err, user, function(){
-      console.log("deserializeUserError: " + err)
-    });
+    done(err, user);
   });
 });
 
