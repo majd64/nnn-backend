@@ -4,7 +4,6 @@ const mongoose = require("mongoose");
 const session = require("express-session");
 const passport = require("passport");
 const passportLocalMongoose = require("passport-local-mongoose");
-const cors = require("cors");
 const nodemailer = require('nodemailer');
 require("dotenv").config();
 const MongoStore = require('connect-mongo')(session);
@@ -52,7 +51,7 @@ var transporter = nodemailer.createTransport({
   }
 });
 
-app.post("/login", function(req, res) {
+app.post("/api/login", function(req, res) {
   const user = new User({
     email: req.body.email,
     password: req.body.password
@@ -70,7 +69,7 @@ app.post("/login", function(req, res) {
   });
 });
 
-app.post("/register", function(req, res) {
+app.post("/api/register", function(req, res) {
   if (req.body.username == null || req.body.username == ""){
     res.send("Username is required");
     return;
@@ -145,12 +144,12 @@ app.get('/verifyemail/:emailverificationhash', function (req, res) {
   })
 })
 
-app.get("/logout", function(req, res) {
+app.get("/api/logout", function(req, res) {
   req.logout();
   res.send("success")
 });
 
-app.get("/user/auth", function(req, res){
+app.get("/api/user/auth", function(req, res){
   console.log("auth called: " + req.body.id);
   if (req.isAuthenticated()) {
     res.send("true")
@@ -159,7 +158,7 @@ app.get("/user/auth", function(req, res){
   }
 })
 
-app.route("/user")
+app.route("/api/user")
   .get(function(req, res) {
     if (req.isAuthenticated()) {
       console.log("/user: " + req.body.id)
@@ -198,7 +197,7 @@ app.route("/user")
     }
   })
 
-app.post("/user/changepassword", function(req, res) {
+app.post("/api/user/changepassword", function(req, res) {
   if (req.isAuthenticated()) {
     User.findOne({
       id: req.body.id
