@@ -11,41 +11,31 @@ let User = require("./models/user.model");
 let isEmailValid = require("./isEmailValid");
 const path = require('path');
 
-
 const app = express();
 
-mongoose.connect("mongodb+srv://admin:" + process.env.DBPASS + "@cluster0.xpbd4.mongodb.net/" + process.env.DBNAME + "?retryWrites=true&w=majority", {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-});
+mongoose.connect("mongodb+srv://admin:" + process.env.DBPASS + "@cluster0.xpbd4.mongodb.net/" + process.env.DBNAME + "?retryWrites=true&w=majority", { useNewUrlParser: true, useUnifiedTopology: true});
 mongoose.set("useCreateIndex", true);
 
+app.set('trust proxy', 1);
 app.use(express.static(path.join(__dirname, 'build')));
-
-
-
-
-app.set('trust proxy', 1) // trust first proxy
-app.use(bodyParser.urlencoded({
-  extended: true
-}));
+app.use(bodyParser.urlencoded({extended: true}));
 app.use(session({
   secret: process.env.SECRET,
   resave: false,
   saveUninitialized: false,
-  store: new MongoStore({ mongooseConnection: mongoose.connection }),
+  store: new MongoStore({
+    mongooseConnection: mongoose.connection
+  }),
 }));
 app.use(passport.initialize());
 app.use(passport.session());
 
 passport.use(User.createStrategy());
 passport.serializeUser(function(user, done) {
-  console.log("serializing user")
   done(null, user.id);
 });
 
 passport.deserializeUser(function(id, done) {
-  console.log("deserializing user")
   User.findById(id, function(err, user) {
     done(err, user);
   });
@@ -67,38 +57,33 @@ app.post("/api/login", function(req, res) {
   });
   req.login(user, function(err) {
     if (err) {
-      console.log(err)
-      res.send("Nuts! An unknown error occured")
+      console.log(err);
+      res.send("Nuts! An unknown error occured");
     } else {
       passport.authenticate("local")(req, res, function() {
-        res.send("success")
+        res.send("success");
       });
     }
   });
 });
 
 app.post("/api/register", function(req, res) {
-  if (req.body.username == null || req.body.username == ""){
+  if (req.body.username == null || req.body.username == "") {
     res.send("Username is required");
     return;
-  }
-  else if (req.body.email == null || req.body.email == ""){
+  } else if (req.body.email == null || req.body.email == "") {
     res.send("Email is required");
     return;
-  }
-  else if (req.body.password == null || req.body.password == ""){
+  } else if (req.body.password == null || req.body.password == "") {
     res.send("Password is required");
     return;
-  }
-  else if (req.body.password != req.body.password2){
+  } else if (req.body.password != req.body.password2) {
     res.send("Passwords do not match");
     return;
-  }
-  else if (req.body.password.length < 6){
+  } else if (req.body.password.length < 6) {
     res.send("Passwords must be at least 6 characters long");
     return;
-  }
-  else if (!isEmailValid(req.body.email)){
+  } else if (!isEmailValid(req.body.email)) {
     res.send("Invalid email address");
     return;
   }
@@ -108,13 +93,11 @@ app.post("/api/register", function(req, res) {
   }), req.body.password, function(err, user) {
     if (err) {
       console.log(err)
-      if (err.name === "UserExistsError"){
+      if (err.name === "UserExistsError") {
         res.send("This email already exists")
-      }
-      else if (err.name === "MongoError"){
+      } else if (err.name === "MongoError") {
         res.send("This username already exists")
-      }
-      else{
+      } else {
         res.send("Nuts! An unknown error occured")
       }
     } else {
@@ -125,52 +108,26 @@ app.post("/api/register", function(req, res) {
           subject: 'NN Email Verification',
           text: 'Thank you for registering for NNN click the following link to verify your email: https://nnn-server.herokuapp.com/verifyemail/' + user.emailVerificationHash
         };
-        transporter.sendMail(mailOptions, function(error, info){
+        transporter.sendMail(mailOptions, function(error, info) {
           if (error) {
             console.log(error);
-          } else {
-            console.log('Email sent: ' + info.response);
           }
         });
-        res.send("success")
+        res.send("success");
       });
     }
   });
 });
-
-app.get('/verifyemail/:emailverificationhash', function (req, res) {
-  User.findOne({
-    emailVerificationHash: req.params.emailverificationhash
-  }, function(err, user) {
-    if (user) {
-      user.emailVerified = true;
-      user.save();
-      res.redirect("https://nnn-server.herokuapp.com/login")
-    } else {
-      res.send("cannot find user")
-    }
-  })
-})
 
 app.get("/api/logout", function(req, res) {
   req.logout();
   res.send("success")
 });
 
-app.get("/api/user/auth", function(req, res){
-  console.log("auth reached");
-  if (req.isAuthenticated()) {
-    res.send("true")
-  } else {
-    res.send("false")
-  }
-})
-
 app.route("/api/user")
   .get(function(req, res) {
     if (req.isAuthenticated()) {
       User.findOne({
-
         id: req.body.id
       }, function(err, user) {
         if (user) {
@@ -183,7 +140,6 @@ app.route("/api/user")
       res.send("no auth");
     }
   })
-
   .patch(function(req, res) {
     if (req.isAuthenticated()) {
       User.update({
@@ -202,7 +158,15 @@ app.route("/api/user")
     } else {
       res.send("no auth");
     }
-  })
+  });
+
+app.get("/api/user/auth", function(req, res) {
+  if (req.isAuthenticated()) {
+    res.send("true")
+  } else {
+    res.send("false")
+  }
+});
 
 app.post("/api/user/changepassword", function(req, res) {
   if (req.isAuthenticated()) {
@@ -210,9 +174,9 @@ app.post("/api/user/changepassword", function(req, res) {
       id: req.body.id
     }, function(err, user) {
       if (user) {
-        user.setPassword(req.body.newpassword, function(){
-            user.save();
-            res.send("success")
+        user.setPassword(req.body.newpassword, function() {
+          user.save();
+          res.send("success")
         });
       } else {
         res.send("cannot find user")
@@ -221,12 +185,29 @@ app.post("/api/user/changepassword", function(req, res) {
   } else {
     res.send("no auth")
   }
-})
+});
+
+app.get('/verifyemail/:emailverificationhash', function(req, res) {
+  User.updateOne({
+      emailVerificationHash: req.params.emailverificationhash
+    }, {
+      $set: {
+        "emailVerified": true
+      }
+    },
+    function(err, result) {
+      if (err) {
+        res.send(err)
+      } else {
+        res.redirect("/")
+      };
+    });
+});
 
 app.get('/*', (req, res) => {
   res.sendFile(path.join(__dirname, 'build', 'index.html'));
 });
 
 app.listen(process.env.PORT || 5000, function() {
-  console.log("Server started.");
+  console.log("Server started");
 });
