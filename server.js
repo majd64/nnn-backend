@@ -28,7 +28,8 @@ app.use(session({
   secret: process.env.SECRET,
   resave: false,
   saveUninitialized: false,
-  store: new MongoStore({ mongooseConnection: mongoose.connection })
+  store: new MongoStore({ mongooseConnection: mongoose.connection }),
+  httpOnly: false
 }));
 app.use(passport.initialize());
 app.use(passport.session());
