@@ -18,7 +18,7 @@ mongoose.connect("mongodb+srv://admin:" + process.env.DBPASS + "@cluster0.xpbd4.
 });
 mongoose.set("useCreateIndex", true);
 
-app.enable('trust proxy');
+app.set('trust proxy', 1) // trust first proxy
 app.use(bodyParser.urlencoded({
   extended: true
 }));
