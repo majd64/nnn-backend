@@ -29,6 +29,9 @@ app.use(session({
   resave: false,
   saveUninitialized: false,
   store: new MongoStore({ mongooseConnection: mongoose.connection }),
+  cookie: {
+    SameSite: "Lax"
+  }
 }));
 app.use(passport.initialize());
 app.use(passport.session());
