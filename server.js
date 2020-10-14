@@ -128,14 +128,14 @@ app.route("/api/user")
   .get(function(req, res) {
     if (req.isAuthenticated()) {
       User.findOne({
-        id: req.body.id
+        _id: req.user._id
       }, function(err, user) {
         if (user) {
           res.send(user)
         } else {
           res.send("cannot find user")
         }
-      })
+      });
     } else {
       res.send("no auth");
     }
@@ -143,7 +143,7 @@ app.route("/api/user")
   .patch(function(req, res) {
     if (req.isAuthenticated()) {
       User.update({
-          id: req.body.id
+          _id: req.user._id
         }, {
           $set: req.body
         },
@@ -160,6 +160,51 @@ app.route("/api/user")
     }
   });
 
+app.route("/api/user/friends")
+  .get(function(req, res){
+    if (req.isAuthenticated()) {
+      User.findOne({
+        _id: req.user._id
+      }, function(err, user) {
+        if (user) {
+          User.find({
+            _id: { $in: user.friends}
+          }, function(err, friends){
+            if (err){
+              console.log(err);
+            }else{
+              res.send({"friends" : friends})
+            }
+          });
+        } else {
+          res.send("cannot find user")
+        }
+      })
+    } else {
+      res.send("no auth");
+    }
+  });
+
+app.post("/api/user/addfriend", function(req, res){
+  console.log("add friend")
+  console.log(req.body.newfriendusername)
+  if (req.isAuthenticated()) {
+    User.findOne({
+      username: req.body.newfriendusername
+    }, function(err, user) {
+      if (user) {
+        user.incomingFriendRequests.push(req.user._id);
+        user.save();
+        res.send("success")
+      } else {
+        res.send("failure")
+      }
+    })
+  } else {
+
+  }
+})
+
 app.get("/api/user/auth", function(req, res) {
   if (req.isAuthenticated()) {
     res.send("true")
@@ -171,10 +216,10 @@ app.get("/api/user/auth", function(req, res) {
 app.post("/api/user/changepassword", function(req, res) {
   if (req.isAuthenticated()) {
     User.findOne({
-      id: req.body.id
+      _id: req.user._id
     }, function(err, user) {
       if (user) {
-        user.setPassword(req.body.newpassword, function() {
+          user.setPassword(req.body.newpassword, function() {
           user.save();
           res.send("success")
         });
