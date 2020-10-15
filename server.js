@@ -134,6 +134,8 @@ app.route("/api/user")
           res.send({"status": "error", "message": "cannot find user"});
         }
       });
+    }else{
+      res.send({"status": "error", "message": "no auth"});
     }
   })
   .patch(function(req, res) {
@@ -161,10 +163,17 @@ app.route("/api/user/friends")
         _id: req.user._id
       }, function(err, user) {
         if (user) {
+          let response = {"status": "success", "friends": [], "friendRequests": []}
           User.find({
             _id: { $in: user.friends}
           }, function(err, friends){
-            res.send({"status": "success", "friends" : friends})
+            response.friends = friends;
+            User.find({
+              _id: { $in: user.incomingFriendRequests}
+            }, function(err, requests){
+              response.friendRequests = requests;
+              res.send(response);
+            });
           });
         } else {
           res.send({"status": "error", "message": "cannot find user"});
@@ -173,25 +182,23 @@ app.route("/api/user/friends")
     }
   });
 
-app.post("/api/user/addfriend", function(req, res){
+app.post("/api/user/sendFriendRequest", async(req, res) => {
   if (req.isAuthenticated()) {
-    User.findOne({
-      username: req.body.newfriendusername.trim()
-    }, function(err, friend) {
+    User.findOne({username: req.body.newfriendusername.trim()}, async function(err, friend) {
       if (friend) {
-        friend.incomingFriendRequests.push(req.user._id);
-        friend.save();
         User.findOne({
           _id: req.user._id
-        }, function(err, user) {
+        }, async function(err, user) {
           if (user) {
+            friend.incomingFriendRequests.push(req.user._id);
             user.outgoingFriendRequests.push(friend._id);
-            user.save();
-            res.send({"status": "success"})
+            await friend.save();
+            await user.save();
+            res.send({"status": "success"});
           } else {
             res.send({"status": "error", "message": "cannot find user"});
           }
-        })
+        });
       } else {
         res.send({"status": "error", "message": "cannot find user"});
       }
@@ -199,13 +206,32 @@ app.post("/api/user/addfriend", function(req, res){
   }
 })
 
-app.get("/api/user/auth", function(req, res) {
-  if (req.isAuthenticated()) {
-    res.send({"status": "success"})
-  } else {
-    res.send({"status": "error"})
+app.post("/api/user/friendRequest/:acceptfriend", async (req, res) => {
+  if (req.isAuthenticated()){
+    User.findOne({_id: req.user._id}, async (err, user) => {
+      if (user){
+        User.findOne({_id: req.body.friendId}, async (err, friend) => {
+          if (friend){
+            user.incomingFriendRequests.pull({_id: req.body.friendId});
+            friend.outgoingFriendRequests.pull({_id: req.user._id});
+            console.log(req.params.acceptfriend)
+            if (req.params.acceptfriend === "true"){
+              user.friends.push(friend._id);
+              friend.friends.push(user._id);
+            }
+            await user.save();
+            await friend.save();
+            res.send({"status": "success"})
+          }else{
+            res.send({"status": "error", "message": "cannot find user"});
+          }
+        })
+      }else {
+        res.send({"status": "error", "message": "cannot find user"});
+      }
+    })
   }
-});
+})
 
 app.post("/api/user/changepassword", function(req, res) {
   if (req.isAuthenticated()) {
