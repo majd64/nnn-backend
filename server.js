@@ -132,6 +132,8 @@ app.route("/api/user")
           res.send({"status": "success", "user": user});
         }
       });
+    }else{
+      res.send({"status": "error"});
     }
   })
   .patch(function(req, res) {
