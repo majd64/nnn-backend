@@ -130,12 +130,8 @@ app.route("/api/user")
       }, function(err, user) {
         if (user) {
           res.send({"status": "success", "user": user});
-        } else {
-          res.send({"status": "error", "message": "cannot find user"});
         }
       });
-    }else{
-      res.send({"status": "error", "message": "no auth"});
     }
   })
   .patch(function(req, res) {
@@ -190,13 +186,24 @@ app.post("/api/user/sendFriendRequest", async(req, res) => {
           _id: req.user._id
         }, async function(err, user) {
           if (user) {
-            friend.incomingFriendRequests.push(req.user._id);
-            user.outgoingFriendRequests.push(friend._id);
-            await friend.save();
-            await user.save();
-            res.send({"status": "success"});
-          } else {
-            res.send({"status": "error", "message": "cannot find user"});
+            if (user.username === friend.username){
+              res.send({"status": "error", "message": "you cannot add yourself"});
+            }
+            else if (user.friends.includes(friend._id)){
+              res.send({"status": "error", "message": "you are already friends"});
+            }
+            else if(user.outgoingFriendRequests.includes(friend._id)){
+              res.send({"status": "error", "message": "you already sent a request to this user"});
+            }
+            else if (user.incomingFriendRequests.includes(friend._id)){
+              res.send({"status": "error", "message": "you already have a request from this user"});
+            }else{
+              friend.incomingFriendRequests.push(user._id);
+              user.outgoingFriendRequests.push(friend._id);
+              await friend.save();
+              await user.save();
+              res.send({"status": "success"});
+            }
           }
         });
       } else {
@@ -214,7 +221,6 @@ app.post("/api/user/friendRequest/:acceptfriend", async (req, res) => {
           if (friend){
             user.incomingFriendRequests.pull({_id: req.body.friendId});
             friend.outgoingFriendRequests.pull({_id: req.user._id});
-            console.log(req.params.acceptfriend)
             if (req.params.acceptfriend === "true"){
               user.friends.push(friend._id);
               friend.friends.push(user._id);
@@ -226,8 +232,6 @@ app.post("/api/user/friendRequest/:acceptfriend", async (req, res) => {
             res.send({"status": "error", "message": "cannot find user"});
           }
         })
-      }else {
-        res.send({"status": "error", "message": "cannot find user"});
       }
     })
   }
@@ -243,8 +247,6 @@ app.post("/api/user/changepassword", function(req, res) {
           user.save();
           res.send({"status": "success"});
         });
-      } else {
-        res.send({"status": "error", "message": "cannot find user"})
       }
     })
   }
