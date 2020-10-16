@@ -48,7 +48,10 @@ const userSchema = new mongoose.Schema({
     type: [mongoose.Schema.Types.ObjectId]
   },
   friends: {
-    type: [mongoose.Schema.Types.ObjectId]
+    type: [{
+      id: mongoose.Schema.Types.ObjectId,
+      messages: [{message: String, sender: Boolean, timestamp: String}]
+    }]
   },
   emailVerificationHash: {
     type: String,

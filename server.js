@@ -163,7 +163,7 @@ app.route("/api/user/friends")
         if (user) {
           let response = {"status": "success", "friends": [], "friendRequests": []}
           User.find({
-            _id: { $in: user.friends}
+            _id: { $in: user.friends.map(a => a.id)}
           }, function(err, friends){
             response.friends = friends;
             User.find({
@@ -180,7 +180,7 @@ app.route("/api/user/friends")
     }
   });
 
-app.post("/api/user/sendFriendRequest", async(req, res) => {
+app.post("/api/user/friends/sendFriendRequest", async(req, res) => {
   if (req.isAuthenticated()) {
     User.findOne({username: req.body.newfriendusername.trim()}, async function(err, friend) {
       if (friend) {
@@ -215,7 +215,7 @@ app.post("/api/user/sendFriendRequest", async(req, res) => {
   }
 })
 
-app.post("/api/user/friendRequest/:acceptfriend", async (req, res) => {
+app.post("/api/user/friends/friendRequest/:acceptfriend", async (req, res) => {
   if (req.isAuthenticated()){
     User.findOne({_id: req.user._id}, async (err, user) => {
       if (user){
@@ -224,8 +224,19 @@ app.post("/api/user/friendRequest/:acceptfriend", async (req, res) => {
             user.incomingFriendRequests.pull({_id: req.body.friendId});
             friend.outgoingFriendRequests.pull({_id: req.user._id});
             if (req.params.acceptfriend === "true"){
-              user.friends.push(friend._id);
-              friend.friends.push(user._id);
+              user.friends.push({id: friend._id, messages: []});
+              friend.friends.push({id: user._id, messages: []});
+              var mailOptions = {
+                from: process.env.NODEMAILERUSER,
+                to: user.email,
+                subject: `${friend.username} Accepted Your Friend Request`,
+                text: `${friend.username} accepted your request`
+              };
+              transporter.sendMail(mailOptions, function(error, info) {
+                if (error) {
+                  console.log(error);
+                }
+              });
             }
             await user.save();
             await friend.save();
@@ -233,11 +244,56 @@ app.post("/api/user/friendRequest/:acceptfriend", async (req, res) => {
           }else{
             res.send({"status": "error", "message": "cannot find user"});
           }
-        })
+        });
+      }
+    });
+  }
+});
+
+app.get("/api/user/friends/messages/:friendID", (req, res) => {
+  if (req.isAuthenticated){
+    User.findOne({_id: req.user._id}, (err, user) => {
+      if (user){
+        var friend = user.friends.filter(fr => {
+          return fr.id === req.params.friendID
+        });
+        if (friend.length > 0){
+          res.send({status: "success", messages: friend.messages})
+        }else{
+          res.send({status: "error", message: "friend not found"})
+        }
       }
     })
   }
-})
+});
+
+app.post("/api/user/friends/sendMessage", async () => {
+  if (req.isAuthenticated()){
+    User.findOne({_id: req.user._id}, async(err, user) => {
+      if (user){
+        var friend = user.friends.filter(fr => {
+          return fr.id === req.body.friendID
+        });
+        if (friend.length > 0){
+          friends[0].messages.push({message: req.body.message, sender: true, timestamp: Date.now()})
+        }
+        user.save();
+
+        User.findOne({_id: req.user.friendID}, async(err, friend) => {
+          if (friend){
+            var sender = friend.friends.filter(fr => {
+              return fr.id === req.user._id
+            });
+            if (sender.length > 0){
+              sender[0].messages.push({message: req.body.message, sender: false, timestamp: Date.now()})
+            }
+            friend.save();
+          }
+        });
+      }
+    });
+  }
+});
 
 app.post("/api/user/changepassword", function(req, res) {
   if (req.isAuthenticated()) {
