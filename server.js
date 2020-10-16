@@ -13,7 +13,7 @@ const path = require("path");
 
 const app = express();
 
-mongoose.connect(`mongodb+srv://admin:${process.env.DBPASS}@cluster0.xpbd4.mongodb.net/${process.env.DBNAME}?retryWrites=true&w=majority`, { useNewUrlParser: true, useUnifiedTopology: true});
+mongoose.connect(`mongodb+srv://admin:${process.env.DBPASS}@cluster0.xpbd4.mongodb.net/${process.env.DBNAME}?retryWrites=true&w=majority`, { useNewUrlParser: true, useUnifiedTopology: true, autoIndex: true});
 mongoose.set("useCreateIndex", true);
 
 app.use(express.static(path.join(__dirname, "build")));
@@ -57,7 +57,7 @@ app.post("/api/login", function(req, res) {
   });
   req.login(user, function(err) {
     if (err) {
-      res.send({"status": "error", "message": "an unknown error occured"});
+      console.log(err);
     } else {
       passport.authenticate("local")(req, res, function() {
         res.send({"status": "success"});
@@ -104,7 +104,7 @@ app.post("/api/register", function(req, res) {
           from: process.env.NODEMAILERUSER,
           to: user.email,
           subject: "NN Email Verification",
-          text: `Thank you for registering for NNN click the following link to verify your email: https://nnn-server.herokuapp.com/verifyemail/${user.emailVerificationHash}`
+          text: `Thank you for registering for NNN click the following link to verify your email: https://nnn-server.herokuapp.com/api/user/verifyemail/${user._id}/${user.emailVerificationHash}`
         };
         transporter.sendMail(mailOptions, function(error, info) {
           if (error) {
@@ -136,23 +136,6 @@ app.route("/api/user")
       res.send({"status": "error"});
     }
   })
-  .patch(function(req, res) {
-    if (req.isAuthenticated()) {
-      User.update({
-          _id: req.user._id
-        }, {
-          $set: req.body
-        },
-        function(err) {
-          if (!err) {
-            res.send({"status": "success"});
-          } else {
-            res.send({"status": "error"});
-          }
-        }
-      );
-    }
-  });
 
 app.route("/api/user/friends")
   .get(function(req, res){
@@ -173,10 +156,8 @@ app.route("/api/user/friends")
               res.send(response);
             });
           });
-        } else {
-          res.send({"status": "error", "message": "cannot find user"});
         }
-      })
+      });
     }
   });
 
@@ -191,7 +172,7 @@ app.post("/api/user/friends/sendFriendRequest", async(req, res) => {
             if (user.username === friend.username){
               res.send({"status": "error", "message": "you cannot add yourself"});
             }
-            else if (user.friends.includes(friend._id)){
+            else if (user.friends.filter(fr => {return fr.id.equals(friend._id)}).length != 0){
               res.send({"status": "error", "message": "you are already friends"});
             }
             else if(user.outgoingFriendRequests.includes(friend._id)){
@@ -208,12 +189,10 @@ app.post("/api/user/friends/sendFriendRequest", async(req, res) => {
             }
           }
         });
-      } else {
-        res.send({"status": "error", "message": "cannot find user"});
       }
     });
   }
-})
+});
 
 app.post("/api/user/friends/friendRequest/:acceptfriend", async (req, res) => {
   if (req.isAuthenticated()){
@@ -242,7 +221,7 @@ app.post("/api/user/friends/friendRequest/:acceptfriend", async (req, res) => {
             await friend.save();
             res.send({"status": "success"})
           }else{
-            res.send({"status": "error", "message": "cannot find user"});
+            res.send({"status": "error", "message": "cannot find friend"});
           }
         });
       }
@@ -278,7 +257,6 @@ app.post("/api/user/friends/sendMessage", async () => {
           friends[0].messages.push({message: req.body.message, sender: true, timestamp: Date.now()})
         }
         user.save();
-
         User.findOne({_id: req.user.friendID}, async(err, friend) => {
           if (friend){
             var sender = friend.friends.filter(fr => {
@@ -310,21 +288,22 @@ app.post("/api/user/changepassword", function(req, res) {
   }
 });
 
-app.get('/verifyemail/:emailverificationhash', function(req, res) {
-  User.updateOne({
-      emailVerificationHash: req.params.emailverificationhash
-    }, {
-      $set: {
-        "emailVerified": true
+app.get('/api/user/verifyemail/:userid/:emailverificationhash', function(req, res) {
+  User.findOne({
+    "_id": req.params.userid
+  }, function(err, user){
+    if (user){
+      if (user.emailVerificationHash === req.params.emailverificationhash){
+        user.emailVerified = true;
+        user.save();
+        res.redirect("/login")
+      }else{
+        res.send({"status": "error", "message": "wrong hash"})
       }
-    },
-    function(err) {
-      if (err) {
-        res.send({"status": "error", "message": "unknown error"})
-      } else {
-        res.redirect("/")
-      };
-    });
+    }else{
+      res.send({"status": "error", "message": "cannot find user"})
+    }
+  })
 });
 
 app.get('/*', (req, res) => {
