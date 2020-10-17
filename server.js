@@ -161,7 +161,7 @@ app.route("/api/user/friends")
     }
   });
 
-app.post("/api/user/friends/sendFriendRequest", async(req, res) => {
+app.post("/api/user/friends/sendfriendrequest", async(req, res) => {
   if (req.isAuthenticated()) {
     User.findOne({username: req.body.newfriendusername.trim()}, async function(err, friend) {
       if (friend) {
@@ -189,6 +189,8 @@ app.post("/api/user/friends/sendFriendRequest", async(req, res) => {
             }
           }
         });
+      }else{
+        res.send({"status": "error", "message": "this user does not exist"});
       }
     });
   }
@@ -234,10 +236,14 @@ app.get("/api/user/friends/messages/:friendID", (req, res) => {
     User.findOne({_id: req.user._id}, (err, user) => {
       if (user){
         var friend = user.friends.filter(fr => {
-          return fr.id === req.params.friendID
+          return fr.id.equals(req.params.friendID)
         });
         if (friend.length > 0){
-          res.send({status: "success", messages: friend.messages})
+          if (friend[0].messages){
+            res.send({status: "success", messages: friend[0].messages});
+          }else{
+            res.send({status: "success", messages: []});
+          }
         }else{
           res.send({status: "error", message: "friend not found"})
         }
@@ -246,22 +252,26 @@ app.get("/api/user/friends/messages/:friendID", (req, res) => {
   }
 });
 
-app.post("/api/user/friends/sendMessage", async () => {
+app.post("/api/user/friends/sendMessage", (req, res) => {
   if (req.isAuthenticated()){
-    User.findOne({_id: req.user._id}, async(err, user) => {
+    User.findOne({_id: req.user._id}, (err, user) => {
       if (user){
         var friend = user.friends.filter(fr => {
-          return fr.id === req.body.friendID
+          return fr.id.equals(req.body.friendID)
         });
         if (friend.length > 0){
-          friends[0].messages.push({message: req.body.message, sender: true, timestamp: Date.now()})
+          friend[0].messages.push({message: req.body.message, sender: true, timestamp: Date.now()})
         }
         user.save();
-        User.findOne({_id: req.user.friendID}, async(err, friend) => {
+        User.findOne({_id: mongoose.Types.ObjectId(req.body.friendID)}, (err, friend) => {
+          console.log(friend)
           if (friend){
             var sender = friend.friends.filter(fr => {
-              return fr.id === req.user._id
+              return fr.id.equals(req.user._id)
             });
+            console.log("sender")
+
+            console.log(sender)
             if (sender.length > 0){
               sender[0].messages.push({message: req.body.message, sender: false, timestamp: Date.now()})
             }
